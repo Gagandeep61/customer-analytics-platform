@@ -16,8 +16,8 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      # This step perfectly isolates the backend, copies tracking attributes, and pushes cleanly
-      name: Push backend directory to Hugging Face
+      # Fixed: Added the missing hyphen below so YAML reads this as a valid step list item
+      - name: Push backend directory to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
