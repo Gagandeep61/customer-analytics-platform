@@ -27,6 +27,16 @@ jobs:
       - name: Install Hugging Face Hub
         run: pip install "huggingface_hub>=0.20"
 
+      - name: Verify token exists
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "TOKEN IS EMPTY - secret not set correctly"
+          else
+            echo "Token exists, length: ${#HF_TOKEN}"
+          fi
+
       - name: Upload to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
