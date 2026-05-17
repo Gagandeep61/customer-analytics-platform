@@ -2,7 +2,7 @@
 // CONFIGURATION
 // Change this URL when you deploy to HuggingFace
 // ─────────────────────────────────────────────────────────────
-const API_URL = 'https://huggingface.co/spaces/gagan61/customer-analytics-api';   // LOCAL development
+const API_URL = 'https://gagan61-customer-analytics-api.hf.space';
 // const API_URL = 'https://YOUR_USERNAME-customer-analytics-api.hf.space';  // PRODUCTION
  
  
