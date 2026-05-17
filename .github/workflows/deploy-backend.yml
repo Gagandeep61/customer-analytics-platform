@@ -1,7 +1,5 @@
 name: Deploy Backend to Hugging Face
 
-# This tells the robot to ONLY run when you push changes to the 'main' branch
-# and ONLY if the files inside the 'backend' folder were changed.
 on:
   push:
     branches: [main]
@@ -12,18 +10,27 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Use v4 to clear that Node.js warning and grab the fresh workspace
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          lfs: true # Crucial for grabbing your large .pkl models!
+          fetch-depth: 0
+          lfs: true
 
-      - name: Push backend to Hugging Face
+      # Step 2: Set up Git identity and LFS tracking in the virtual environment
+      - name: Install and configure Git LFS
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git lfs install
+
+      # Step 3: Use a clean subtree push to isolate just the backend folder to HF
+      - name: Push backend directory to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          cd backend
-          git init
-          git checkout -b main
-          git add .
-          git commit -m "Auto-deploy from GitHub Actions"
-          git push https://gagan61:$HF_TOKEN@huggingface.co/spaces/gagan61/customer-analytics-api main --force
+          # Create a clean tracking pointer to your Hugging Face space
+          git remote add huggingface https://gagan61:$HF_TOKEN@huggingface.co/spaces/gagan61/customer-analytics-api
+          
+          # Push ONLY the contents of the backend folder directly to HF's main branch
+          git subtree push --prefix backend huggingface main --force
