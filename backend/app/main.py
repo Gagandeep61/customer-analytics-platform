@@ -1,4 +1,4 @@
-# Triggering automated CI/CD pipeline deployment for Hugginface Backend API.
+# Triggering automated CI/CD pipeline deployment
 # # main.py
 # The FastAPI application — all endpoints live here
 
