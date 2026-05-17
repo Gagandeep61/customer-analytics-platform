@@ -10,7 +10,7 @@ An end-to-end machine learning project that predicts customer churn, segments cu
 
 - **Dashboard:** https://customer-analytics-platform-one.vercel.app
 - **API Docs:** https://gagan61-customer-analytics-api.hf.space/docs
-- **GitHub:** https://github.com/YOUR_USERNAME/customer-analytic-platform
+- **GitHub:** https://github.com/Gagandeep61/customer-analytic-platform
 
 ---
 

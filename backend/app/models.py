@@ -1,7 +1,7 @@
 # models.py
 # Defines the shape of data going IN and OUT of each endpoint
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Dict
 
 # ─────────────────────────────────────────
@@ -17,8 +17,9 @@ class ChurnRequest(BaseModel):
     cluster:          int   = Field(..., ge=0, le=3, description="K-Means cluster (0-3)")
     model_choice:     str   = Field('xgboost',   description="Which model to use")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        protected_namespaces=(),
+        json_schema_extra={
             "example": {
                 "frequency": 8,
                 "monetary": 1200.0,
@@ -30,6 +31,7 @@ class ChurnRequest(BaseModel):
                 "model_choice": "xgboost"
             }
         }
+    )
 
 # ─────────────────────────────────────────
 # OUTPUT: What the API returns for churn prediction
@@ -40,6 +42,8 @@ class ChurnResponse(BaseModel):
     recommendation:    str
     roi_calculation:   Dict
     model_used:        str
+
+    model_config = ConfigDict(protected_namespaces=())
 
 # ─────────────────────────────────────────
 # INPUT: What the user sends for segmentation
@@ -52,8 +56,8 @@ class SegmentRequest(BaseModel):
     product_diversity: int   = Field(..., ge=1)
     return_rate:       float = Field(..., ge=0, le=1)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(   
+        json_schema_extra={
             "example": {
                 "frequency": 8,
                 "monetary": 1200.0,
@@ -63,6 +67,7 @@ class SegmentRequest(BaseModel):
                 "return_rate": 0.05
             }
         }
+    )
 
 # ─────────────────────────────────────────
 # OUTPUT: What the API returns for segmentation
