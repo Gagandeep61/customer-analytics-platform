@@ -1,4 +1,4 @@
-# Triggering automated CI/CD pipeline deployment
+# Triggering automated CI/CD pipeline deployment.
 # # main.py
 # The FastAPI application — all endpoints live here
 
