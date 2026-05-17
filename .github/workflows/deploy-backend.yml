@@ -1,0 +1,29 @@
+name: Deploy Backend to Hugging Face
+
+# This tells the robot to ONLY run when you push changes to the 'main' branch
+# and ONLY if the files inside the 'backend' folder were changed.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          lfs: true # Crucial for grabbing your large .pkl models!
+
+      - name: Push backend to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd backend
+          git init
+          git checkout -b main
+          git add .
+          git commit -m "Auto-deploy from GitHub Actions"
+          git push https://gagan61:$HF_TOKEN@huggingface.co/spaces/gagan61/customer-analytics-api main --force
