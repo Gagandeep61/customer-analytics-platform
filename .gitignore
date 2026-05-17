@@ -1,0 +1,56 @@
+# ========================
+# Python & Environments
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# ========================
+# Jupyter Notebooks
+# ========================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ========================
+# Machine Learning & Tracking
+# ========================
+mlruns/
+
+# ========================
+# Data Files (CRITICAL)
+# ========================
+*.csv
+*.xlsx
+data/cleaned_transactions.xlsx
+data/Online Retail.xlsx
+
+# ========================
+# OS & IDE Settings
+# ========================
+.DS_Store
+.vscode/
+.idea/
+
+# ========================
+# Secrets & Environments
+# ========================
+.env
+.env.*
+*.env
+
+# ========================
+# Vercel (Frontend)
+# ========================
+.vercel/
+
+# ========================
+# Windows Junk Files
+# ========================
+Thumbs.db

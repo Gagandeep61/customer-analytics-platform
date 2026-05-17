@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Analytics Platform</title>
+ 
+  <!-- Tailwind CSS (no installation needed) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+ 
+  <!-- Chart.js for visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ 
+  <!-- Our custom styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+ 
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+ 
+  <!-- ─── HEADER ─────────────────────────────────────────────── -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-sm">CA</div>
+        <div>
+          <h1 class="font-bold text-white text-lg leading-none">Customer Analytics</h1>
+          <p class="text-slate-400 text-xs">ML-Powered Churn & Segmentation</p>
+        </div>
+      </div>
+      <!-- API Status indicator -->
+      <div class="flex items-center gap-2 text-xs">
+        <div id="status-dot" class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+        <span id="status-text" class="text-slate-400">Connecting...</span>
+      </div>
+    </div>
+  </header>
+ 
+  <!-- ─── TAB NAVIGATION ────────────────────────────────────── -->
+  <div class="max-w-6xl mx-auto px-6 pt-8">
+    <div class="flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 w-fit">
+      <button onclick="switchTab('churn')" id="tab-churn"
+        class="tab-btn active px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
+        ⚠️ Churn Prediction
+      </button>
+      <button onclick="switchTab('segment')" id="tab-segment"
+        class="tab-btn px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
+        👥 Segmentation
+      </button>
+      <button onclick="switchTab('compare')" id="tab-compare"
+        class="tab-btn px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
+        📊 Model Comparison
+      </button>
+    </div>
+  </div>
+ 
+  <!-- ─── MAIN CONTENT ──────────────────────────────────────── -->
+  <main class="max-w-6xl mx-auto px-6 py-8">
+ 
+    <!-- ══════════════════════════════════════════════════════
+         TAB 1: CHURN PREDICTION
+    ══════════════════════════════════════════════════════ -->
+    <div id="tab-content-churn" class="tab-content">
+ 
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+ 
+        <!-- INPUT FORM -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h2 class="text-white font-bold text-xl mb-1">Predict Churn Risk</h2>
+          <p class="text-slate-400 text-sm mb-6">Enter customer details to predict if they'll churn. Don't know the cluster? Use the <button onclick="switchTab('segment')" class="text-blue-400 hover:text-blue-300 underline cursor-pointer font-medium">Segmentation tab</button> to find it first.</p>
+          
+        <!-- Cluster Reference -->
+        <div class="cluster-ref bg-slate-800/50 border border-slate-700 rounded-lg p-3 mb-4 text-xs text-slate-300">
+          <p class="font-semibold text-slate-300 mb-2">Customer Segment Reference:</p>
+          <div class="grid grid-cols-2 gap-2">
+            <!-- Row 1 -->
+            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-400"></span> <span class="text-red-300">Cluster 0 = New</span></div>
+            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> <span class="text-amber-400">Cluster 1 = VIP</span></div>
+            <!-- Row 2 -->
+            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-400"></span> <span class="text-green-300">Cluster 2 = At-Risk</span></div>
+            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400"></span> <span class="text-blue-300">Cluster 3 = Loyal</span></div>
+            </div>
+          </div>
+
+          <!-- Quick fill buttons -->
+          <div class="flex gap-2 mb-6">
+            <span class="text-slate-500 text-xs self-center">Try example:</span>
+            <button onclick="fillChurnExample('vip')" class="px-3 py-1 text-xs bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full hover:bg-amber-500/20 transition-all">VIP</button>
+            <button onclick="fillChurnExample('loyal')" class="px-3 py-1 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-all">Loyal</button>
+            <button onclick="fillChurnExample('new')" class="px-3 py-1 text-xs bg-green-500/10 text-green-400 border border-green-500/20 rounded-full hover:bg-green-500/20 transition-all">New</button>
+            <button onclick="fillChurnExample('atrisk')" class="px-3 py-1 text-xs bg-red-500/10 text-red-400 border border-red-500/20 rounded-full hover:bg-red-500/20 transition-all">At-Risk</button>
+          </div>
+ 
+          <div class="space-y-4">
+            <!-- Row 1 -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Frequency (orders)</label>
+                <input type="number" id="c-frequency" min="1" placeholder="e.g. 5"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Monetary (total £)</label>
+                <input type="number" id="c-monetary" min="0" step="0.01" placeholder="e.g. 1200"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+            </div>
+ 
+            <!-- Row 2 -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">AOV (avg order £)</label>
+                <input type="number" id="c-aov" min="0" step="0.01" placeholder="e.g. 240"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Tenure (days active)</label>
+                <input type="number" id="c-tenure" min="0" placeholder="e.g. 180"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+            </div>
+ 
+            <!-- Row 3 -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Product Diversity</label>
+                <input type="number" id="c-diversity" min="1" placeholder="e.g. 12"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Return Rate (0–1)</label>
+                <input type="number" id="c-returnrate" min="0" max="1" step="0.01" placeholder="e.g. 0.05"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+            </div>
+ 
+            <!-- Row 4 -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+              <label class="block text-xs text-slate-400 mb-1.5">
+                Customer Cluster (0–3) 
+                <button onclick="document.querySelector('.cluster-ref').scrollIntoView({behavior:'smooth'})" class="text-blue-300 hover:text-blue-200 text-xs ml-1 underline">↑ View segment reference above</button>                </label>
+            <input type="number" id="c-cluster" min="0" max="3" placeholder="e.g. 0"
+                class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">ML Model</label>
+                <select id="c-model"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all">
+                  <option value="xgboost">XGBoost (Best AUC)</option>
+                  <option value="knn">KNN (Best F1)</option>
+                  <option value="logistic">Logistic Regression</option>
+                  <option value="ridge">Ridge Classifier</option>
+                  <option value="lasso">Lasso (L1)</option>
+                  <option value="naive_bayes">Naive Bayes</option>
+                </select>
+              </div>
+            </div>
+ 
+            <!-- Submit button -->
+            <button onclick="predictChurn()"
+              class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all text-sm mt-2 flex items-center justify-center gap-2">
+              <span id="churn-btn-text">Predict Churn Risk</span>
+              <div id="churn-spinner" class="spinner hidden"></div>
+            </button>
+ 
+            <!-- Error message -->
+            <div id="churn-error" class="hidden text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3"></div>
+          </div>
+        </div>
+ 
+        <!-- RESULTS PANEL -->
+        <div id="churn-results" class="hidden space-y-4">
+ 
+          <!-- Risk gauge card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center">
+            <p class="text-slate-400 text-sm mb-3">Churn Probability</p>
+            <div id="churn-probability" class="text-6xl font-bold text-white mb-3">—</div>
+            <div id="churn-risk-badge" class="inline-block px-4 py-1.5 rounded-full text-sm font-semibold">—</div>
+            <p id="churn-model-used" class="text-slate-500 text-xs mt-2">—</p>
+          </div>
+ 
+          <!-- Recommendation -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-white font-semibold mb-2 flex items-center gap-2">
+              💡 Recommended Action
+            </h3>
+            <p id="churn-recommendation" class="text-slate-300 text-sm leading-relaxed">—</p>
+          </div>
+ 
+          <!-- ROI -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-white font-semibold mb-4">💰 Business Impact</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-800 rounded-xl p-3 text-center">
+                <p class="text-slate-400 text-xs mb-1">Value at Risk</p>
+                <p id="roi-risk" class="text-red-400 font-bold text-lg">—</p>
+              </div>
+              <div class="bg-slate-800 rounded-xl p-3 text-center">
+                <p class="text-slate-400 text-xs mb-1">Expected Save</p>
+                <p id="roi-save" class="text-green-400 font-bold text-lg">—</p>
+              </div>
+              <div class="bg-slate-800 rounded-xl p-3 text-center">
+                <p class="text-slate-400 text-xs mb-1">Intervention Cost</p>
+                <p id="roi-cost" class="text-slate-300 font-bold text-lg">—</p>
+              </div>
+              <div class="bg-slate-800 rounded-xl p-3 text-center">
+                <p class="text-slate-400 text-xs mb-1">ROI</p>
+                <p id="roi-value" class="text-blue-400 font-bold text-lg">—</p>
+              </div>
+            </div>
+          </div>
+ 
+        </div>
+ 
+        <!-- Placeholder when no result yet -->
+        <div id="churn-placeholder" class="bg-slate-900/50 border border-slate-800 border-dashed rounded-2xl flex items-center justify-center text-slate-600 text-sm">
+          <div class="text-center">
+            <div class="text-4xl mb-3">📊</div>
+            <p>Results will appear here</p>
+            <p class="text-xs mt-1">Fill the form and click Predict</p>
+          </div>
+        </div>
+ 
+      </div>
+    </div>
+ 
+ 
+    <!-- ══════════════════════════════════════════════════════
+         TAB 2: CUSTOMER SEGMENTATION
+    ══════════════════════════════════════════════════════ -->
+    <div id="tab-content-segment" class="tab-content hidden">
+ 
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+ 
+        <!-- INPUT FORM -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h2 class="text-white font-bold text-xl mb-1">Customer Segmentation</h2>
+          <p class="text-slate-400 text-sm mb-6">Find which segment a customer belongs to.</p>
+ 
+          <!-- Quick fill -->
+          <div class="flex gap-2 mb-6">
+            <span class="text-slate-500 text-xs self-center">Try example:</span>
+            <button onclick="fillSegmentExample('vip')" class="px-3 py-1 text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-full hover:bg-yellow-500/20 transition-all">VIP</button>
+            <button onclick="fillSegmentExample('loyal')" class="px-3 py-1 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-all">Loyal</button>
+            <button onclick="fillSegmentExample('new')" class="px-3 py-1 text-xs bg-green-500/10 text-green-400 border border-green-500/20 rounded-full hover:bg-green-500/20 transition-all">New</button>
+            <button onclick="fillSegmentExample('atrisk')" class="px-3 py-1 text-xs bg-red-500/10 text-red-400 border border-red-500/20 rounded-full hover:bg-red-500/20 transition-all">At-Risk</button>
+          </div>
+ 
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Frequency (orders)</label>
+                <input type="number" id="s-frequency" min="1" placeholder="e.g. 5"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Monetary (total £)</label>
+                <input type="number" id="s-monetary" min="0" step="0.01" placeholder="e.g. 1200"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+            </div>
+ 
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">AOV (avg order £)</label>
+                <input type="number" id="s-aov" min="0" step="0.01" placeholder="e.g. 240"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Tenure (days active)</label>
+                <input type="number" id="s-tenure" min="0" placeholder="e.g. 180"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+            </div>
+ 
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Product Diversity</label>
+                <input type="number" id="s-diversity" min="1" placeholder="e.g. 12"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Return Rate (0–1)</label>
+                <input type="number" id="s-returnrate" min="0" max="1" step="0.01" placeholder="e.g. 0.05"
+                  class="input-field w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all"/>
+              </div>
+            </div>
+
+            <button onclick="predictSegment()"
+              class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all text-sm mt-2 flex items-center justify-center gap-2">
+              <span id="seg-btn-text">Find Segment</span>
+              <div id="seg-spinner" class="spinner hidden"></div>
+            </button>
+ 
+            <div id="seg-error" class="hidden text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3"></div>
+          </div>
+        </div>
+ 
+        <!-- SEGMENT RESULTS -->
+        <div id="seg-results" class="hidden space-y-4">
+ 
+          <!-- Segment badge -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center">
+            <p class="text-slate-400 text-sm mb-3">Customer Segment</p>
+            <div id="seg-name" class="text-4xl font-bold text-white mb-2">—</div>
+            <div id="seg-cluster" class="text-slate-400 text-sm">—</div>
+          </div>
+ 
+          <!-- Cluster profile -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-white font-semibold mb-4">Segment Average Profile</h3>
+            <div id="seg-profile" class="space-y-2 text-sm">—</div>
+          </div>
+ 
+        </div>
+ 
+        <!-- Placeholder -->
+        <div id="seg-placeholder" class="bg-slate-900/50 border border-slate-800 border-dashed rounded-2xl flex items-center justify-center text-slate-600 text-sm">
+          <div class="text-center">
+            <div class="text-4xl mb-3">👥</div>
+            <p>Segment results will appear here</p>
+          </div>
+        </div>
+ 
+      </div>
+    </div>
+ 
+ 
+    <!-- ══════════════════════════════════════════════════════
+         TAB 3: MODEL COMPARISON
+    ══════════════════════════════════════════════════════ -->
+    <div id="tab-content-compare" class="tab-content hidden">
+ 
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-white font-bold text-xl mb-1">Model Performance Comparison</h2>
+            <p class="text-slate-400 text-sm">6 ML models trained and compared on the same dataset</p>
+          </div>
+          <button onclick="loadModelComparison()"
+            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg border border-slate-700 transition-all flex items-center gap-2">
+            <span id="compare-btn-text">Load Results</span>
+            <div id="compare-spinner" class="spinner hidden"></div>
+          </button>
+        </div>
+ 
+        <!-- Metrics table -->
+        <div id="compare-table-wrapper" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-800">
+                <th class="text-left py-3 px-4 text-slate-400 font-medium">Model</th>
+                <th class="text-center py-3 px-4 text-slate-400 font-medium">AUC</th>
+                <th class="text-center py-3 px-4 text-slate-400 font-medium">F1</th>
+                <th class="text-center py-3 px-4 text-slate-400 font-medium">Precision</th>
+                <th class="text-center py-3 px-4 text-slate-400 font-medium">Recall</th>
+                <th class="text-center py-3 px-4 text-slate-400 font-medium">Time</th>
+                <th class="text-left py-3 px-4 text-slate-400 font-medium">Best For</th>
+              </tr>
+            </thead>
+            <tbody id="compare-table-body">
+              <tr>
+                <td colspan="7" class="text-center py-8 text-slate-500">Click "Load Results" to fetch model metrics</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+ 
+      <!-- AUC Bar Chart -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <h3 class="text-white font-semibold mb-4">AUC Score Comparison</h3>
+        <div class="h-64">
+          <canvas id="auc-chart"></canvas>
+        </div>
+      </div>
+ 
+    </div>
+ 
+  </main>
+ 
+  <!-- ─── FOOTER ─────────────────────────────────────────────── -->
+  <footer class="border-t border-slate-800 mt-16 py-6">
+    <div class="max-w-6xl mx-auto px-6 flex items-center justify-between text-xs text-slate-500">
+      <span>Customer Analytics Platform — Built with FastAPI + Scikit-learn + XGBoost</span>
+      <a href="https://github.com" target="_blank" class="hover:text-slate-300 transition-colors">GitHub →</a>
+    </div>
+  </footer>
+ 
+  <script src="script.js"></script>
+</body>
+</html>
+ 
