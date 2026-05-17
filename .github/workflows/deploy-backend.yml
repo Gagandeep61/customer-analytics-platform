@@ -16,15 +16,28 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      # Official, bulletproof action specifically designed to sync a subfolder to Hugging Face Spaces
-      - name: Push to Hugging Face Spaces
-        uses: itsmebhavin/github-action-huggingface-space-sync@v1
-        with:
-          # Your Hugging Face Username
-          username: "gagan61"
-          # The name of your Hugging Face Space repository
-          space_name: "customer-analytics-api"
-          # The secure secret key you saved in GitHub settings
-          hf_token: ${{ secrets.HF_TOKEN }}
-          # Tell the runner to ONLY push the backend directory
-          subdirectory: "backend"
+      - name: Push backend directory to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 1. Move into the backend directory
+          cd backend
+          
+          # 2. Set up local Git workspace inside the runner
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          
+          # 3. Connect to Hugging Face and pull their existing metadata files (like README.md)
+          git remote add hf https://gagan61:$HF_TOKEN@huggingface.co/spaces/gagan61/customer-analytics-api
+          
+          # 4. Pull any existing files from Hugging Face to avoid history conflicts
+          git pull hf main --allow-unrelated-histories || true
+          
+          # 5. Stage, commit, and push your clean backend files
+          git add .
+          if [ -f ../.gitattributes ]; then cp ../.gitattributes .; fi
+          git commit -m "Auto-deploy from GitHub Actions" || echo "No changes to commit"
+          
+          # 6. Push directly to Hugging Face's main branch
+          git push hf main
