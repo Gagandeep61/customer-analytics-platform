@@ -16,28 +16,20 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Push backend directory to Hugging Face
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      # Install the official Hugging Face CLI tooling
+      - name: Install Hugging Face Hub
+        run: pip install huggingface_hub
+
+      # Upload the backend folder directly via API, bypassing Git conflicts completely
+      - name: Upload to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # 1. Move into the backend directory
-          cd backend
-          
-          # 2. Set up local Git workspace inside the runner
-          git init
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          
-          # 3. Connect to Hugging Face and pull their existing metadata files (like README.md)
-          git remote add hf https://gagan61:$HF_TOKEN@huggingface.co/spaces/gagan61/customer-analytics-api
-          
-          # 4. Pull any existing files from Hugging Face to avoid history conflicts
-          git pull hf main --allow-unrelated-histories || true
-          
-          # 5. Stage, commit, and push your clean backend files
-          git add .
-          if [ -f ../.gitattributes ]; then cp ../.gitattributes .; fi
-          git commit -m "Auto-deploy from GitHub Actions" || echo "No changes to commit"
-          
-          # 6. Push directly to Hugging Face's main branch
-          git push hf main
+          python -c "
+          from huggingface_hub import HfApi
+          api
