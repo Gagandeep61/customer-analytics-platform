@@ -7,7 +7,6 @@ on:
       - 'backend/**'
 
 env:
-  # Opts into Node.js 24 runner to fully eliminate the deprecation warnings
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -26,7 +25,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install Hugging Face Hub
-        run: pip install huggingface_hub
+        run: pip install "huggingface_hub>=0.20"
 
       - name: Upload to Hugging Face Space
         env:
@@ -36,17 +35,16 @@ jobs:
           from huggingface_hub import HfApi
           import os
 
-          # Initialize API with your GitHub repository secret token
           api = HfApi(token=os.environ['HF_TOKEN'])
-          
+
           print('Starting sync to Hugging Face Space...')
-          
+
           api.upload_folder(
               folder_path='backend',
               repo_id='gagan61/customer-analytics-api',
               repo_type='space',
-              delete_disappeared_files=True
+              ignore_patterns=['__pycache__', '*.pyc', '.env', '*.log'],
           )
-          
-          print('Sync completed successfully! Your Space is up to date.')
+
+          print('Sync completed! All local backend files are now on Hugging Face.')
           "
