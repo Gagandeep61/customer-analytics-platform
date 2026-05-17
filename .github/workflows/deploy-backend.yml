@@ -10,27 +10,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Use v4 to clear that Node.js warning and grab the fresh workspace
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
 
-      # Step 2: Set up Git identity and LFS tracking in the virtual environment
-      - name: Install and configure Git LFS
-        run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-          git lfs install
-
-      # Step 3: Use a clean subtree push to isolate just the backend folder to HF
-      - name: Push backend directory to Hugging Face
+      # This step perfectly isolates the backend, copies tracking attributes, and pushes cleanly
+      name: Push backend directory to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Create a clean tracking pointer to your Hugging Face space
-          git remote add huggingface https://gagan61:$HF_TOKEN@huggingface.co/spaces/gagan61/customer-analytics-api
+          # 1. Move into the backend directory
+          cd backend
           
-          # Push ONLY the contents of the backend folder directly to HF's main branch
-          git subtree push --prefix backend huggingface main --force
+          # 2. Build a fresh temporary Git tracking space *inside* this folder on the runner
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          
+          # 3. Bring along any Git Attributes (like your Git LFS tracking rules for your .pkl files)
+          if [ -f ../.gitattributes ]; then cp ../.gitattributes .; fi
+          
+          # 4. Stage and commit all backend code
+          git add .
+          git commit -m "Auto-deploy from GitHub Actions"
+          
+          # 5. Push directly and force overwrite Hugging Face with the true main code
+          git push https://gagan61:$HF_TOKEN@huggingface.co/spaces/gagan61/customer-analytics-api main --force
