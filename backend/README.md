@@ -1,3 +1,13 @@
+---
+title: Customer Analytics API
+emoji: 📊
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+app_port: 8000
+---
+
 # 🔧 Backend API — Customer Analytics Platform
 
 **FastAPI server for ML model inference**
