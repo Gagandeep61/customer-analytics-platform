@@ -11,6 +11,8 @@ const API_URL = 'https://gagan61-customer-analytics-api.hf.space';
 // ─────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
   checkAPIStatus();
+  fillChurnExample('vip');      // pre-fill churn tab with VIP example
+  fillSegmentExample('vip');    // pre-fill segment tab with VIP example
 });
  
  
