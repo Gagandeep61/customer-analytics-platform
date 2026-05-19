@@ -4,13 +4,37 @@
 
 An end-to-end machine learning project that predicts customer churn, segments customers into 4 groups, and provides actionable business recommendations.
 
+![AUC](https://img.shields.io/badge/XGBoost%20AUC-79.8%25-brightgreen) ![Models](https://img.shields.io/badge/Models%20Trained-6-blue) ![Status](https://img.shields.io/badge/Status-Live-success) ![Python](https://img.shields.io/badge/Python-3.8+-blue)
+
 ---
 
 ## 🚀 Live Demo
 
 - **Dashboard:** https://customer-analytics-platform-one.vercel.app
 - **API Docs:** https://gagan61-customer-analytics-api.hf.space/docs
-- **GitHub:** https://github.com/Gagandeep61/customer-analytic-platform
+- **GitHub:** https://github.com/Gagandeep61/customer-analytics-platform
+
+---
+
+## 🖥️ Dashboard Gallery
+
+<details>
+<summary>📊 Click to view Churn Analytics View</summary>
+
+![Churn Analytics](images/churn-image.png)
+</details>
+
+<details>
+<summary>👥 Click to view Customer Segmentation View</summary>
+
+![Customer Segments](images/segment-image.png)
+</details>
+
+<details>
+<summary>🤖 Click to view Model Comparison View</summary>
+
+![Model Comparison](images/model-comparison-image.png)
+</details>
 
 ---
 
