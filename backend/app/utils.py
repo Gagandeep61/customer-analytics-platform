@@ -60,7 +60,10 @@ def calculate_roi(churn_probability: float, monetary: float) -> dict:
     value_at_risk  = round(churn_probability * monetary, 2)
     expected_save  = round(value_at_risk * retention_lift, 2)
     net_benefit    = round(expected_save - intervention_cost, 2)
-    roi            = round(net_benefit / intervention_cost, 2) if intervention_cost > 0 else 0
+    roi = 0
+    if intervention_cost > 0:
+        roi = round(net_benefit / intervention_cost, 2)
+
 
     return {
         "value_at_risk":      value_at_risk,
@@ -70,3 +73,14 @@ def calculate_roi(churn_probability: float, monetary: float) -> dict:
         "roi":                roi,
         "worth_intervening":  net_benefit > 0
     }
+def safe_aov_check(frequency: int, monetary: float) -> tuple:
+    """
+    Safely calculate AOV and return error status.
+    Returns: (is_valid, aov_value, error_message)
+    """
+    if frequency <= 0:
+        return (False, 0, "Frequency must be > 0 (division-by-zero in AOV calculation)")
+    
+    aov = round(monetary / frequency, 2)
+    return (True, aov, None)
+

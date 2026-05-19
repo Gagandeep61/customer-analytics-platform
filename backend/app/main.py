@@ -9,7 +9,7 @@ import logging
 
 from .ml_models import MLModels
 from .models import ChurnRequest, ChurnResponse, SegmentRequest, SegmentResponse
-from .utils import get_risk_level, generate_recommendation, calculate_roi
+from .utils import get_risk_level, generate_recommendation, calculate_roi, safe_aov_check
 
 # ─────────────────────────────────────────
 # Setup logging
@@ -30,9 +30,12 @@ app = FastAPI(
 # Without this, the browser blocks cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # Later restrict to your Vercel URL
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "https://customer-analytics-platform-one.vercel.app",
+        "http://localhost:3000",   # local dev
+    ],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 # Load all models ONCE when the API starts
@@ -81,6 +84,11 @@ def predict_churn(request: ChurnRequest):
                 status_code=400,
                 detail=f"Invalid model. Choose from: {valid_models}"
             )
+        
+        # Guard against AOV division-by-zero
+        is_valid, _, err_msg = safe_aov_check(request.frequency, request.monetary)
+        if not is_valid:
+            raise HTTPException(status_code=422, detail=err_msg)
 
         # Step 2: Build feature array in the same order as training
         # Order must match feature_names saved in Phase 4

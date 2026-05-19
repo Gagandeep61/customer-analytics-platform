@@ -18,7 +18,7 @@ window.addEventListener('load', () => {
 // API STATUS CHECK
 // Pings the backend to see if it's running
 // ─────────────────────────────────────────────────────────────
-async function checkAPIStatus() {
+async function checkAPIStatus(retries = 0, maxRetries = 5) {
   const dot  = document.getElementById('status-dot');
   const text = document.getElementById('status-text');
  
@@ -29,10 +29,19 @@ async function checkAPIStatus() {
     if (data.status === 'healthy') {
       dot.className  = 'w-2 h-2 rounded-full bg-green-400';
       text.textContent = `API Online · ${data.models_loaded} models`;
+      return;
     }
   } catch (err) {
+    if (retries < maxRetries) {
+      text.textContent = `Backend warming up... (${retries + 1}/${maxRetries})`;
+      dot.className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
+      setTimeout(() => checkAPIStatus(retries + 1, maxRetries), 2000);
+      return;
+    }
+    
     dot.className  = 'w-2 h-2 rounded-full bg-red-400';
-    text.textContent = 'API Offline — start with: uvicorn app.main:app --reload';
+    text.textContent = 'API Offline — please try again in a moment';
+    setTimeout(() => checkAPIStatus(0, maxRetries), 5000);
   }
 }
  
@@ -52,6 +61,16 @@ function switchTab(tabName) {
  
   // Activate selected tab button
   document.getElementById(`tab-${tabName}`).classList.add('active');
+
+  // Auto-load model comparison on tab switch
+  if (tabName === 'compare') {
+    setTimeout(() => {
+      const tbody = document.getElementById('compare-table-body');
+      if (tbody.innerText.includes('Click "Load Results"')) {
+        loadModelComparison();
+      }
+    }, 100);
+  }
 }
  
  
@@ -61,8 +80,8 @@ function switchTab(tabName) {
 const churnExamples = {
   vip:    { frequency: 6, monetary: 3315, aov: 448, tenure: 192, diversity: 128, returnrate: 0.022, cluster: 1 },
 loyal:  { frequency: 4, monetary: 1295, aov: 287, tenure: 107, diversity: 79,  returnrate: 0.024, cluster: 3 },
-new:    { frequency: 1, monetary: 1158, aov: 647, tenure: 47,  diversity: 45,  returnrate: 0.034, cluster: 2 },
-atrisk: { frequency: 1, monetary: 350,  aov: 215, tenure: 8,   diversity: 21,  returnrate: 0.030, cluster: 0 },
+new:    { frequency: 1, monetary: 1158, aov: 647, tenure: 47,  diversity: 45,  returnrate: 0.034, cluster: 0 },
+atrisk: { frequency: 1, monetary: 350,  aov: 215, tenure: 8,   diversity: 21,  returnrate: 0.030, cluster: 2 },
 };
  
 function fillChurnExample(type) {
@@ -125,6 +144,7 @@ async function predictChurn() {
     const response = await fetch(`${API_URL}/predict-churn`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         frequency, monetary, aov, tenure,
         product_diversity: diversity,
@@ -210,6 +230,7 @@ async function predictSegment() {
     const response = await fetch(`${API_URL}/segment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         frequency, monetary, aov, tenure,
         product_diversity: diversity,
@@ -264,6 +285,25 @@ function displaySegmentResults(data) {
         <span class="text-white font-medium">${typeof val === 'number' ? val.toFixed(2) : val}</span>
       </div>
     `).join('');
+
+    // AUTO-FILL cluster in churn tab
+  document.getElementById('c-cluster').value = data.cluster_id;
+  
+  // Reveal the hidden checkmark in the HTML label (requires the index.html update)
+  const autoFillSpan = document.getElementById('cluster-auto-filled');
+  if (autoFillSpan) autoFillSpan.classList.remove('hidden');
+  
+  // Show temporary toast notification
+  const notif = document.createElement('div');
+  notif.className = 'fixed bottom-4 right-4 bg-blue-500/20 border border-blue-500/50 text-blue-400 px-4 py-2 rounded-lg text-sm transition-opacity duration-500';
+  notif.textContent = `✓ Cluster ${data.cluster_id} auto-filled in Churn tab`;
+  document.body.appendChild(notif);
+  
+  // Remove toast after 3 seconds
+  setTimeout(() => {
+    notif.style.opacity = '0';
+    setTimeout(() => notif.remove(), 500);
+  }, 3000);
 }
  
  
@@ -273,10 +313,13 @@ function displaySegmentResults(data) {
 let aucChart = null;
  
 async function loadModelComparison() {
+  hideError('compare-error');
   setLoading('compare', true);
  
   try {
-    const response = await fetch(`${API_URL}/models/compare`);
+    const response = await fetch(`${API_URL}/models/compare`, {
+      signal: AbortSignal.timeout(15000)
+    });
  
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
  
@@ -284,7 +327,7 @@ async function loadModelComparison() {
     displayModelComparison(data);
  
   } catch (err) {
-    alert('Cannot connect to backend. Make sure it is running on localhost:8000');
+    showError('compare-error', 'Cannot connect to backend. Try refreshing or check the API status.');
   } finally {
     setLoading('compare', false);
   }
@@ -376,15 +419,19 @@ function drawAUCChart(models) {
 function setLoading(prefix, isLoading) {
   const btnText = document.getElementById(`${prefix}-btn-text`);
   const spinner = document.getElementById(`${prefix}-spinner`);
- 
+  // Find the parent button of the btn-text span
+  const btn = btnText ? btnText.closest('button') : null;
+
   if (isLoading) {
     if (btnText) btnText.textContent = 'Loading...';
     if (spinner) spinner.classList.remove('hidden');
+    if (btn) btn.disabled = true;           // ← prevent double-submit
   } else {
     if (prefix === 'churn')   { if (btnText) btnText.textContent = 'Predict Churn Risk'; }
     if (prefix === 'seg')     { if (btnText) btnText.textContent = 'Find Segment'; }
     if (prefix === 'compare') { if (btnText) btnText.textContent = 'Load Results'; }
     if (spinner) spinner.classList.add('hidden');
+    if (btn) btn.disabled = false;          // ← re-enable
   }
 }
  
